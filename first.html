@@ -15,6 +15,15 @@
                 return "0001";
             }
             
+            function testAnyFunc() {
+                if (isWKWebView()) {
+                    window.webkit.messageHandlers.amcfm_utils.postMessage({"testAnyFunc":"Test"});
+                }
+                else {
+                    amcfm_utils.testAnyFunc("Test");
+                }
+            }
+
             function showShare() {
                 if (isWKWebView()) {
                     window.webkit.messageHandlers.amcfm_utils.postMessage({"shouldShowShare":"yes","message":"hehe"});
@@ -58,6 +67,8 @@
         <button type="button"  onclick="closeClick()">close</button>
         <br>
         <button type="button" onclick="logClick()">log</button>
+        <br>
+        <button type="button" onclick="testAnyFunc()">testAnyFunc</button>
         <br>
         <a href="capture.html">Go to capture page</a>
 
