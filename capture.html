@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta id="viewport" name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    </head>
+    <body>
+        <p id="demo">
+        onBackPressed=0000;
+        <br>
+        <a href="amcfm://extra/browse?entryIdActivityId=activityStartFromWebView&actionDesc=goToADPage&url=https://m.chinaamc.com/activity/hxydhl/index.html" >SCHEME</a>
+        </p>
+        
+        <script>
+
+            function onBackPressed() {
+                return "0000";
+            }
+            
+            function showShare() {
+                if (isWKWebView()) {
+                    window.webkit.messageHandlers.amcfm_utils.postMessage({"shouldShowShare":"yes","message":"hehe"});
+                }
+                else {
+                    amcfm_utils.showShare("Hele");
+                }
+            }
+
+            function closeClick() {
+                if (isWKWebView()) {
+                    window.webkit.messageHandlers.amcfm_utils.postMessage({"finish":"yes"});
+                }
+                else {
+                    amcfm_utils.finish();
+                }
+            }
+
+            function isWKWebView() { 
+                var ua = navigator.userAgent;
+                if (ua.indexOf("wkwebview") != -1) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        </script>
+        
+        <button type="button"  onclick="showShare()">showShare</button>
+
+        <button type="button"  onclick="closeClick()">close</button>
+        
+    </body>
+</html>

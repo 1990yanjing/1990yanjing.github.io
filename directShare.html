@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta id="viewport" name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+</head>
+    <body>
+        
+        <p id="demo">
+        onBackPressed != 0000
+        <br>
+        <a href="amcfm://extra/browse?entryIdActivityId=activityStartFromWebView&actionDesc=goToADPage&url=https://m.chinaamc.com/activity/hxydhl/index.html" >SCHEME</a>
+        </p>
+        
+        <script>
+
+            function onBackPressed() {
+                return "0001";
+            }
+            
+
+            
+
+            function showShare() {
+                var config = {
+                    "imgUrl" : "https://m.chinaamc.com/activity/wgjxWX/images/wgjx.jpg",
+                    "link" : "https://m.baidu.com",
+                     "desc" : "9月26日起火热发售，华夏基金与蚂蚁金服合作首款产品，用大数据洞察3.86亿剁手族背后的投资机会。",
+                    "title" : "华夏网购精选基金，看网购大数据，边剁手边淘金！"
+                };
+
+                var appurl='amcfm://trade/subscribe?fundCode=010109&fundName=华夏磐泰定开混合（LOF）';
+                var wgwurl='https://m.chinaamc.com/mphone/mp/subscribe/subscribe/002837/wgw?tjsrc=bannertj';
+                var wgwStatistics='/ggtWX/statistics';
+                var ua=navigator.userAgent.toLowerCase();
+                var oBtn=document.getElementById('actionBtn');
+
+                var json='{"type":"url","title":"'+ config.title+'","message":"'+ config.desc+'","url":"'+ config.link+'","image":"'+
+        config.imgUrl+'"}';
+
+                if (ua.indexOf("amcfmapp") != -1) {
+                    if (isWKWebView()) {
+                        window.webkit.messageHandlers.amcfm_utils.postMessage({"share":json});
+                    }
+                    else {
+                        amcfm_utils.share(json);
+                    }
+                }
+            }
+
+            function close() {
+                if (isWKWebView()) {
+                    window.webkit.messageHandlers.amcfm_utils.postMessage({"finish":"yes"});
+                }
+                else {
+                    amcfm_utils.finish();
+                }
+            }
+
+            function isWKWebView() {
+                var ua = navigator.userAgent;
+                if (ua.indexOf("wkwebview") != -1) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        </script>
+        
+        <button type="button"  onclick="showShare()">share</button>
+        <br>
+        <button type="button"  onclick="close()">close</button>
+        <br>
+        <a href="capture.html">Go to capture page</a>
+
+        
+    </body>
+</html>
