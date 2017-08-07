@@ -40,11 +40,11 @@ function isWKWebView() {
     }
 }
 
-function refresh(targetPage) {
+function refreshHome() {
     if (isWKWebView()) {
-        window.webkit.messageHandlers.amcfm_utils.postMessage({"refreshHome":targetPage});
+        window.webkit.messageHandlers.amcfm_utils.postMessage({"refreshHome":""});
     }
     else {
-        amcfm_utils.refreshHome(targetPage);
+        amcfm_utils.refreshHome();
     }
 }
