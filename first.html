@@ -2,74 +2,9 @@
 <html>
 <head>
     <meta id="viewport" name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    <script type="text/javascript" src="js/amcApp.js"></script>
 </head>
     <body>
-        
-        <p id="demo">
-        onBackPressed != 0000
-        </p>
-        
-        <script>
-
-            function onBackPressed() {
-                return "0001";
-            }
-            
-            function testAnyFunc() {
-                if (isWKWebView()) {
-                    window.webkit.messageHandlers.amcfm_utils.postMessage({"testAnyFunc":"Test"});
-                }
-                else {
-                    amcfm_utils.testAnyFunc("Test");
-                }
-            }
-
-            function showShare() {
-                if (isWKWebView()) {
-                    window.webkit.messageHandlers.amcfm_utils.postMessage({"shouldShowShare":"yes","message":"hehe"});
-                }
-                else {
-                    amcfm_utils.showShare("Hele");
-                }
-            }
-
-            function closeClick() {
-                if (isWKWebView()) {
-                    window.webkit.messageHandlers.amcfm_utils.postMessage({"finish":"yes"});
-                }
-                else {
-                    amcfm_utils.finish();
-                }
-            }
-            
-            function logClick() {
-                if (isWKWebView()) {
-                    window.webkit.messageHandlers.amcfm_utils.postMessage({"ucd":"ucd requested from web page"});
-                }
-                else {
-                    amcfm_utils.ucd("ucd requested from web page");
-                }
-            }
-
-            function isWKWebView() {
-                var ua = navigator.userAgent;
-                if (ua.indexOf("wkwebview") != -1) {
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-            function refreshHome() {
-                if (isWKWebView()) {
-                    window.webkit.messageHandlers.amcfm_utils.postMessage({"refreshHome":"intelInvest"});
-                }
-                else {
-                    amcfm_utils.refreshHome();
-                }
-            }
-}
-        </script>
         
         <button type="button"  onclick="showShare()">showShare</button>
         <br>
