@@ -60,6 +60,15 @@
                     return false;
                 }
             }
+            function refreshHome() {
+                if (isWKWebView()) {
+                    window.webkit.messageHandlers.amcfm_utils.postMessage({"refreshHome":"intelInvest"});
+                }
+                else {
+                    amcfm_utils.refreshHome();
+                }
+            }
+}
         </script>
         
         <button type="button"  onclick="showShare()">showShare</button>
