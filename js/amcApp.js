@@ -42,7 +42,7 @@ function isWKWebView() {
 
 function refreshHome() {
     if (isWKWebView()) {
-        window.webkit.messageHandlers.amcfm_utils.postMessage({"refreshHome":""});
+        window.webkit.messageHandlers.amcfm_utils.postMessage({"refreshHome":"intelInvest"});
     }
     else {
         amcfm_utils.refreshHome();
