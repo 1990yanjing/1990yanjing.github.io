@@ -1,0 +1,32 @@
+---
+layout: post
+title: CC03 iOS推送机制浅析
+date: 2018-02-26
+tags: 双百计划
+categories: ios
+---
+
+[ios推送机制](
+http://www.cocoachina.com/ios/20180212/22276.html)
+
+- 可以通俗的把APNS理解为iOS系统为每个app提供的长连接通道
+- 苹果限制了每个app在后台存活的时间，最重要的目的是为了省电，其次优化内存这些。如果彻彻底底的将app杀死了，服务端永远不能主动和客户端建立联系。所以需要一种机制来保证在必要的时候让用户知道服务端所做的改变。技术上只要只有长连接可以做到
+- 便于苹果、用户控制：如果直接让app和服务端建立长连接（比如iOS8之前的voip，就是app在后台保持长连接），苹果是不能控制的。所以通过在app和服务端中间加一个APNS可以有效的进行拦截处理
+- APNS的缺点
+    - 一旦用户的设备处于offline状态，Apple只会存储发送给用户的最新一条push，之前发送的push会被直接丢掉。而且这最后一条离线push也是有过期时间的
+    - 消息大小限制，push只应该用来通知用户有新的内容，而不应该用来承载内容本身
+- Local Push，简单总结一下，如果能够直接拿到数据最好用本地push，如果拿不到，比如说应用被杀死采用远程push。
+- 从用户角度，这两种Push没有任何区别
+
+#### 创建本地推送
+在app运行的时候（无论是前台还是后台），设置好本地推送，然后系统会在合适的时间发出推送。
+
+- 如果app没有在运行或者在后台，系统将直接向用户展示通知，如果app提供了app通知扩展，系统使用用户自定义的界面提示用户。
+- 如果app在前台，系统会给app在内部处理通知的机会。
+
+前面讲过配置本地推送，总结一下有如下几个步骤：
+
+1. **设置内容**：创建并设置好UNMutableNotificationContent。
+2. **设置触发器**：创建通知触发器UNCalendarNotificationTrigger, UNTimeIntervalNotificationTrigger, UNLocationNotificationTrigger其中一种。设置好触发通知的条件。
+3. **连接内容和触发器**：创建UNNotificationRequest ，设置content和trigger。
+4. **添加通知**：调用`addNotificationRequest:withCompletionHandler:计划通知。
