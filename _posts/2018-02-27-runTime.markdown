@@ -79,3 +79,9 @@ const char *ivar_getTypeEndcoding(Ivar v)
 ```
 
 ### [实用案例 利用runtime 获取所有属性来进行字典转模型 (MJExtesion的原理)](https://www.jianshu.com/p/ab966e8a82e2)
+MJExtesion的核心机制
+- 通过运行时获取对象的成员变量列表（class_copyIvarList）
+- 获取变量名称和类型
+- 通过变量名称，objectforKey来获取对应的值
+- 通过setValue:forKeyPath设置到模型当中
+- 此外还得解决：模型和json字段不匹配、模型中嵌套模型、模型中嵌套模型数组等问题
