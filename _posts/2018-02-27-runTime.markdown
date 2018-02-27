@@ -61,3 +61,21 @@ char nameKey;
 }
 ```
 ### **获得某个类的所有成员方法、所有成员变量**
+- 获得某个类的所有成员变量（outCount 会返回成员变量的总数）
+参数：
+1、哪个类
+2、放一个接收值的地址，用来存放属性的个数
+3、返回值：存放所有获取到的属性，通过下面两个方法可以调出名字和类型
+```
+Ivar *class_copyIvarList(Class cls , unsigned int *outCount)
+```
+- 获得成员变量的名字
+```
+const char *ivar_getName(Ivar v)
+```
+- 获得成员变量的类型
+```
+const char *ivar_getTypeEndcoding(Ivar v)
+```
+
+### [实用案例 利用runtime 获取所有属性来进行字典转模型 (MJExtesion的原理)](https://www.jianshu.com/p/ab966e8a82e2)
