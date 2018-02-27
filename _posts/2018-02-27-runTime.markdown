@@ -1,0 +1,63 @@
+---
+layout: post
+title: CC04 runTime
+date: 2018-02-27
+tags: 双百计划
+categories: ios
+---
+
+## RunTime的用处
+### **动态交换两个方法的实现**
+```
++ (void)load {
+    // 获取两个类的类方法
+    Method m1 = class_getClassMethod([UIImage class], @selector(originMethod));
+    Method m2 = class_getClassMethod([UIImage class], @selector(exc_originMethod));
+    // 开始交换方法实现
+    method_exchangeImplementations(m1, m2);
+}
+
++ (UIImage *)exc_originMethod {
+   
+   ...
+
+    return [UIImage exc_originMethod];
+}
+```
+- 自定义方法中最后一定要再调用一下系统的方法，让其有加载图片的功能，但是由于方法交换，系统的方法名已经变成了我们自定义的方法名，这就实现了系统方法的拦截！
+
+### **动态添加对象的成员变量和成员方法**
+- set方法，将值value 跟对象object 关联起来（将值value 存储到对象object 中）
+参数 object：给哪个对象设置属性
+参数 key：**一个属性对应一个Key，将来可以通过key取出这个存储的值，key 可以是任何类型：double、int 等，建议用char 可以节省字节**
+参数 value：给属性设置的值
+参数policy：存储策略 （assign 、copy 、 retain就是strong）
+
+```
+void objc_setAssociatedObject(id object , const void *key ,id value ,objc_AssociationPolicy policy)
+```
+- 利用参数key 将对象object中存储的对应值取出来
+```
+id objc_getAssociatedObject(id object , const void *key)
+```
+
+**步骤**
+1. 创建一个分类，比如给任何一个对象都添加一个name属性，就是NSObject添加分类（NSObject+Category）
+2. 先在.h 中@property 声明出get 和 set 方法，方便点语法调用
+```
+@property(nonatomic,copy)NSString *name;
+```
+3. 在.m 中重写set 和 get 方法，内部利用runtime 给属性赋值和取值
+```
+char nameKey;
+
+- (void)setName:(NSString *)name {
+    // 将某个值跟某个对象关联起来，将某个值存储到某个对象中
+    objc_setAssociatedObject(self, &nameKey, name, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
+- (NSString *)name {
+    return objc_getAssociatedObject(self, &nameKey);
+}
+```
+### **获得某个类的所有成员方法、所有成员变量**
