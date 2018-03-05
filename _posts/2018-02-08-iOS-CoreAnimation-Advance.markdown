@@ -25,6 +25,5 @@ categories: ios
     - anchorPoint默认为{0.5，0.5}，anchorPoint描述的是position的位置与视图哪个单位坐标点重合，从而确定center的位置，position不随着anchorPoint的改变而改变，而center就是“视图中心点”
 - zPosition最实用的功能就是改变图层的显示顺序
 - CGAffineTransform中的“仿射”的意思是无论变换矩阵用什么值，图层中平行的两条线在变换之后任然保持平行，CGAffineTransform可以做出任意符合上述标注的变换
-
----
-未完待续。。。。。。
+- 隐式动画，之所以叫隐式是因为我们并没有指定任何动画的类型。我们仅仅改变了一个属性，然后Core Animation来决定如何并且何时去做动画；动画执行的时间取决于当前事务的设置，动画类型取决于图层行为。**事务实际上是Core Animation用来包含一系列属性动画集合的机制，任何用指定事 务去改变可以做动画的图层属性都不会立刻发生变化，而是当事务一旦提交的时候 开始用一个动画过渡到新值**
+- UIView关联的图层禁用了隐式动画，对这种图层做动画的唯一办法就是使用UIView的动画函数(而不是依赖 )，或者继承UIView，并覆盖```-actionForLayer:forKey:```方法，或者直接创建一个显式动画。对于单独存在的图层，我们可以通过实现图层的```-actionForLayer:forKey:```委托方法，或者提供一个 actions字典来控制隐式动画。
