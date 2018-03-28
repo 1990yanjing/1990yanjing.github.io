@@ -16,7 +16,7 @@ Calling this method causes the table view to ask its data source for new cells f
 When this method is called in an animation block defined by the beginUpdates and endUpdates methods, it behaves similarly to deleteSections:withRowAnimation:. The indexes that UITableView passes to the method are specified in the state of the table view prior to any updates. This happens regardless of ordering of the insertion, deletion, and reloading method calls within the animation block.
 
 - 通过验证以及结合苹果官方的函数注释，当调用reloadSections的时候，会将reload的cell替换掉，并重新新建*newCells*，并将oldCells放入重用池中
-#### 从而引申到tableView的重用原理
+## 从而引申到tableView的重用原理
 - 通过实验的现象，可以推测tableView中存在两个数据结果
 	- visibleCells 存放当前可见的cell的实例
 	- reuseCells 存放缓存的实例
@@ -27,7 +27,8 @@ When this method is called in an animation block defined by the beginUpdates and
 - tableView会将绘制过程中通过cell:forRow获取的cell入队visibleCells
 - tableView的绘制均在layoutSubviews中完成；故此，列表的滚懂会触发绘制；reloadData等刷新操作中，会调用setNeedsLayout以及layoutIfNeed，使得layoutSubviews在下一个RunLoop中被触发
 
-#### 从而又引申出reloadData与RunLoop的关系
+
+## 从而又引申出reloadData与RunLoop的关系
 
 - 线程与RunLoop是一一对应
 - 在RunLoop中事件是排队串行执行的
