@@ -6,6 +6,8 @@ tags: 读书笔记
 categories: ios
 ---
 
+由于搬砖中偶遇使用reloadSections造成的显示异常的问题，发现了一下reloadSections的小猫腻~~
+
 - reloadData;
 >Reloads the rows and sections of the table view.
 Call this method to reload all the data that is used to construct the table, including cells, section headers and footers, index arrays, and so on. For efficiency, the table view redisplays only those rows that are visible. It adjusts offsets if the table shrinks as a result of the reload. The table view’s delegate or data source calls this method when it wants the table view to completely reload its data. It should not be called in the methods that insert or delete rows, especially within an animation block implemented with calls to beginUpdates and endUpdates.
@@ -16,8 +18,9 @@ Calling this method causes the table view to ask its data source for new cells f
 When this method is called in an animation block defined by the beginUpdates and endUpdates methods, it behaves similarly to deleteSections:withRowAnimation:. The indexes that UITableView passes to the method are specified in the state of the table view prior to any updates. This happens regardless of ordering of the insertion, deletion, and reloading method calls within the animation block.
 
 - 通过验证以及结合苹果官方的函数注释，当调用reloadSections的时候，会将reload的cell替换掉，并重新新建*newCells*，并将oldCells放入重用池中
+
 ## 从而引申到tableView的重用原理
-- 通过实验的现象，可以推测tableView中存在两个数据结果
+- 通过实验的现象，可以推测tableView中存在两个数据结构
 	- visibleCells 存放当前可见的cell的实例
 	- reuseCells 存放缓存的实例
 
@@ -25,7 +28,7 @@ When this method is called in an animation block defined by the beginUpdates and
 - 在屏幕滚动或者用户主动调用reloadData的时候，触发tableView的重新绘制和回收；tableView将离屏不在显示的cell实例，放入reuseCells中缓存，并将其hide；通过cell:forRow获取需要显示出来的cells实例，并将是否复用cells的选择全交给开发者；一般我们在开发的时候均会首先调用dequeueReusableCellWithIdentifier:获取可复用的cell
 - dequeueReusableCellWithIdentifier：的实现会首先从visibleCells中出队相同ID的cell实例；如果找不到或者使用完了，就会从reuseCells的缓存池中寻找相同ID的cell实例；如果仍然找不到则会返回nil，由开发者自行创建返回
 - tableView会将绘制过程中通过cell:forRow获取的cell入队visibleCells
-- tableView的绘制均在layoutSubviews中完成；故此，列表的滚懂会触发绘制；reloadData等刷新操作中，会调用setNeedsLayout以及layoutIfNeed，使得layoutSubviews在下一个RunLoop中被触发
+- tableView的绘制均在layoutSubviews中完成；故此，列表的滚动会触发绘制；reloadData等刷新操作中，会调用setNeedsLayout以及layoutIfNeed，使得layoutSubviews在下一个RunLoop中被触发
 
 
 ## 从而又引申出reloadData与RunLoop的关系
