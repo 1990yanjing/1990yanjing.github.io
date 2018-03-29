@@ -11,7 +11,8 @@ categories: ios
 - Step.3 创建实现UIViewControllerAnimatedTransitioning的Animator类
 - Step.4 实现UIViewControllerAnimatedTransitioning指定的协议方法
 - Step.5 在调用push方法前，指定UINavigationController的delegate为自定义的对象
-```
+
+```Objective-C
 //
 //  WYCustomNavigationDelegate.swift
 //  HXFundManager
