@@ -14,7 +14,9 @@ categories: ios
 - Swift中命名空间的实现
     - [简书](https://www.jianshu.com/p/7808aacc0e42)
     - 代码说话,定义名为wy的命名空间；通过协议来划分命名空间，只有遵循协议的类才拥有该命名空间
- ```Swift
+
+```Swift
+
 public final class WYKit<Base> {
     
     public let base: Base
@@ -32,7 +34,6 @@ public protocol WYKitCompatible {
     
     var wy: CompatibleType { get }
 }
-
 // 扩展协议，给出命名空间变量的默认实现
 extension WYKitCompatible {
     
@@ -56,6 +57,7 @@ extension WYKit where Base == String {
         return base + " test"
     }
 }
+
 ```
 
 - 创建DispatchQueue队列，将操作磁盘文件的操作，根据需求在队里中同步或者异步执行，提高性能
@@ -73,7 +75,5 @@ extension WYKit where Base == String {
         }
     }   
 ```
-
-- 
 
 
