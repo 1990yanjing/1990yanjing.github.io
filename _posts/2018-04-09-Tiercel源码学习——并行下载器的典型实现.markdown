@@ -1,0 +1,79 @@
+---
+layout: post
+title: Tiercel源码学习——并行下载器的典型实现
+date: 2018-04-09
+tags: 源码学习
+categories: ios
+---
+
+## 总体框架
+![UML](http://lc-cpc8kfpb.cn-n1.lcfile.com/13f7edb45657a9d9e4bf.png)
+
+
+## 细节学习
+- Swift中命名空间的实现
+    - [简书](https://www.jianshu.com/p/7808aacc0e42)
+    - 代码说话,定义名为wy的命名空间；通过协议来划分命名空间，只有遵循协议的类才拥有该命名空间
+ ```Swift
+public final class WYKit<Base> {
+    
+    public let base: Base
+    
+    init(_ base: Base) {
+        
+        self.base = base
+    }
+}
+
+// 定义命名空间的协议
+public protocol WYKitCompatible {
+    
+    associatedtype CompatibleType
+    
+    var wy: CompatibleType { get }
+}
+
+// 扩展协议，给出命名空间变量的默认实现
+extension WYKitCompatible {
+    
+    public var wy: WYKit<Self> {
+        
+        get {
+            
+            return WYKit(self)
+        }
+    }
+}
+
+// 扩展String实现命名空间wy
+extension String: WYKitCompatible{ }
+
+// String中命名空间wy下的函数
+extension WYKit where Base == String {
+    
+    public func test() -> Base {
+        
+        return base + " test"
+    }
+}
+```
+
+- 创建DispatchQueue队列，将操作磁盘文件的操作，根据需求在队里中同步或者异步执行，提高性能
+- 将重要Delegate（URLSessionDataDelegate、URLSessionTaskDelegate）的实现作为单独的类抽出来，使得代码直观简洁并且解耦
+- 可以通过创建DispatchQueue，并且在Queue中同步的执行某些字段的读写操作，简单的实现互斥资源的同步访问的控制;串行队列通常用来set和get属性的值，避免race conditions
+```Swift
+    private let internalQueue = DispatchQueue(label:"com.XXX.internal")
+    private var internalName: String = ""
+    private var name: String {
+        get {
+            return internalQueue.sync { internalName }
+        }
+        set (newName) {
+            internalQueue.sync { internalName = newName }
+        }
+    }   
+```
+
+- 
+
+

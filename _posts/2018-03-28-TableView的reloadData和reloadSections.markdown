@@ -2,7 +2,7 @@
 layout: post
 title: 由TableView的reloadData和reloadSections想出去。。。
 date: 2018-03-28
-tags: 读书笔记
+tags: 日常
 categories: ios
 ---
 
