@@ -9,6 +9,11 @@ categories: ios
 ## 总体框架
 ![UML](http://lc-cpc8kfpb.cn-n1.lcfile.com/13f7edb45657a9d9e4bf.png)
 
+- Manger是核心类，是功能接口类，提供对外和对内的API，负责任务的管理（新增、开始、暂停、取消、状态维护、并发控制、查询）；session的管理（创建、reset、销毁）
+- Cache负责缓存相关的工作，包括任务信息的缓存（1以pilist文件的形式保存执行中任务的元数据）、本地下载目录的维护
+- DownLoadTask是执行下载任务的实体，维护下载任务相关的描述信息，进度、下载速度、起止时间、下载URL
+- SessionDelegate实现了URLSessionDataDelegate、URLSessionTaskDelegate的委托协议，由manager管理，并持有manager，在协议的回调中，通过manager找到相应的task，调用task中处理回调的方法
+
 
 ## 细节学习
 - Swift中命名空间的实现
