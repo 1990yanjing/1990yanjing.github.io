@@ -70,4 +70,50 @@ categories: ios
     - 按顺序执行任务
     - 将任务拆分为必须主线程中执行的任务和可以在其他线程中执行的任务，然后分别执行
     - 其他任务在加载UI后执行或异步执行
+
+#### 用户界面
+- 视图控制器（controller）的最佳实践
+    - 将业务逻辑独立编写，不存放在controller中，controller只是纽带
+    - 不要在controller中编写动画逻辑。动画应该在独立的动画类中实现
+    - 使用数据源和委托协议，controller只能用来选择正确的视图，并将他们连接到正确的供应源
+    - controller响应来自视图的时间
+    - controller响应来自操作系统的UI相关事件
+    - 不要编写自定义的init方法，由于如果controller被重新切换至xib或者storyboard，那么init方法将永远不会被调用
+    - 创建一个实现了公共设置的基类controller
+    - 尽量不要在controller中使用代码手工布局UI
+    - 通过继承基类享受公共方法，通过编写Category定义自定义方法
+- 减少viewDidLoad中的主线程操作的耗时，任何delay都会造成卡顿
+- viewWillAppear，在这个时刻，过渡动画还未开始，视图对终端用户也是不可见的。不要启动任何视图动画，因为没有任何作用
+- viewDidAppear，视图在视图窗口展示出来，切过度动画完成后，此方法会被调用；启动或者恢复任何想要呈现给用户的视图动画
+- viewWillDisappear，没有直接的办法能够判断这是由于当前controller要出栈还是其他controller入栈导致的；**可以通过遍历当前controller的navigationController的viewControllers属性，查找是否含有当前controller的实例，来判断**
+- **当应用处于前台，后台切换的时候，与视图相关的生命周期方法（willAppear，willDisappear）是不会被调用的，而是通知UIAPPDelegate**
+- 高效实用controller生命周期的最佳实践
+    - 不要重写loadView
+    - 在viewDidAppear中开始动画
+    - 在viewWillDisappear中来暂停或者停止动画
+- 避免在视图层次中多层嵌套。*在层次结构的任何位置添加视图时，他的祖先树节点会执行值为YES的setNeedsLayout:方法，当时事件队列正在执行时，该设置会触发layoutSubviews:。这个调用代价较大，因为视图必须根据约束重新计算子视图的位置，而且在祖先树的每一层都会发生*
+- **要避免使用具有通用目的及功能丰富的组件而带来的消耗，可以使用那些直接实现绘制方法的视图来替代**
+- [UIImage imageNamed:],可以确保内容只被加载至内存一次
+- UITableView的最佳实践
+    - 进行单元格的复用
+    - 避免动态高度的单元格
+    - 当单元格实在复杂，无法避免在视图重用和渲染的时延，可以采用界面外壳（相当于loading态cell），并且监控TableView的滑动速度，当高度滑动的时候显示外壳cell，当滚动速度降低，并且低于阈值的时候，刷新列表展示真实的cell
+- 复合视图（父子视图的嵌套）和直接绘制（drawRect：中直接绘制额）的PK
+    - 直接绘制的性能远远高出复合视图，数十倍的差距
+    - 但是直接绘制维护和拓展难度较大
+
+#### 网络
+- DNS查找时间
+- 网络延迟 = 联网请求的往返时间 - 服务器时间（服务器返回）
+- 在任何可以使用HTTP2的情况下，都应该使用HTTP2
+    - HTTP2支持HTTP请求的真正复用
+    - HTTP2还支持报头的压缩
+- 联网数据格式最佳实践
+    - 使用数据压缩，NSURLRequest会自动给头部添加Accept-Encoding：gzip、deflate
+    - 选择正确的数据格式：Json、XML
+
+#### 测试及发布
+- 单元测试、功能测试、性能测试
+- 测试夹具，进行测试用例前所需的准备和清理阶段
+- 通过编辑scheme，打开gather coverage data,可以收集本次测试的测试覆盖率，十分精确，精确到哪行代码运行了，if-else那个分支运行了，很直观
 - 
