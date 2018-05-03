@@ -112,8 +112,40 @@ categories: ios
     - 使用数据压缩，NSURLRequest会自动给头部添加Accept-Encoding：gzip、deflate
     - 选择正确的数据格式：Json、XML
 
-#### 测试及发布
+#### 测试及发布（后续通过《腾讯iOS测试实践》来补充）
 - 单元测试、功能测试、性能测试
-- 测试夹具，进行测试用例前所需的准备和清理阶段
+- 测试夹具，进行测试用例前所需的准备(setUp)和清理阶段(tearDown)
 - 通过编辑scheme，打开gather coverage data,可以收集本次测试的测试覆盖率，十分精确，精确到哪行代码运行了，if-else那个分支运行了，很直观
+- 使用XCTestExpectation对象测试异步方法
+```OC
+XCTestExpectation *e = [self expectationWithDescription:@"Test networkApi"];
+    
+    [[fmNetworkHandler sharedInstance] getFundDetailChartData:@{@"type": @"oneMonth", @"fundCode": @"003003"} success:^(id responseObject) {
+        
+        NSLog(@"返回结果： %@", responseObject);
+        [e fulfill];
+    } failure:^(NSString *errorCode, NSString *errorMsg) {
+        
+        XCTAssert(nil, @"联网失败");
+    }];
+    
+    [self waitForExpectationsWithTimeout:60 handler:^(NSError * _Nullable error) {
+        
+        if (error) {
+            
+            XCTAssert(nil, @"请求超时");
+        }
+    }];
+```
+- measureBlock ，测试代码段的性能
+```OC
+    [self measureBlock:^{
+        
+        [fmPopupHistoryHandler updatePopupHistoryRecord:@"Test" messageId:@"Test" forUser:nil];
+        XCTAssertTrue([fmPopupHistoryHandler ifRecordExist:@"Test" messageId:@"Test" forUser:nil]);
+    }];
+```
+- 单元测试是针对单一方法、类的测试
+
+#### 工具
 - 
