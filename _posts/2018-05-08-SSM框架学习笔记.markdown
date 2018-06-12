@@ -50,4 +50,8 @@ categories: frontEnd
     
 - 后台代码架构
 ![后台代码基本架构](http://lc-cpc8kfpb.cn-n1.lcfile.com/67aea17b8db909a2c2f4.png)
+    - Command层是业务逻辑的处理层，持有并调用Servive完成业务逻辑的处理
+    - Service封装对Dao层数据访问的调用，提供事务的能力
+    - Dao是底层实际操作数据的接口（Mybatis支持）
+    - Vo（Value Object）数据模型实体
 
