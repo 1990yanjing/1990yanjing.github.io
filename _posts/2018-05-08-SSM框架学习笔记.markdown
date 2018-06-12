@@ -1,0 +1,53 @@
+---
+layout: post
+title: SSM框架学习笔记
+date: 2018-05-02
+tags: 后台学习
+categories: frontEnd
+---
+
+- Spring,控制翻转，依赖注入；通过xml文件的配置实现对于对象生命周期的控制，以及依赖注入的实现；Spring将Java的所有类都看作JavaBean，而IoC的目标就是管理Beans
+- MyBatis：sqSessionFactoryBuilder，sqlSessionFactory，sqlSession，Mapper；Pojo，Mapper（接口、XML）
+- 控制反转就是通过描述（XML或者注解），并通过第三方去产生或获取特定对象的方式
+- Spring-Bean的装配方式【IoC容器，控制反转容器】
+    - 在XML中显示的配置
+    - 通过注解装配Bean:(@component,@Value)、@Bean、@Autowired（@Primary、@Qualifier）
+    - 通过Spring表达式注入
+    - 装配第三方对象Bean，推荐使用XML的方式、装配本地Bean对象推荐使用注解的方式
+- Spring-AOP的应用
+    - 在数据库事务操作中，将数据库资源的申请，回收，事务的提交和回滚切片化，并且抽出
+    - SpringAOP只支持方法拦截
+- Spring-Mybatis本地数据库项目搭建
+    - 使用SpringBean配置数据源【数据源类库可以有多种选择：jdbc模板，c3p0等等】
+    - 使用SpingIoc注入配置SqlSessionFactoryBean
+    - 使用SpingIoc注入配置MapperScannerConfigurer，配置搜索导入mapper的规则
+- Spring事务实现方式
+    - XML形式，已经不推荐了
+    - 注解@Transactional是目前主流的方式
+    - @Transactional的主要配置是：传递性Propagation、隔离性isolation的配置
+        - Propagation：REQUIRED（默认）、REQUIRES_NEW、Nested等等
+        - isolation：脏读 < 读写提 < 可重复 < 序列化【事务并发的隔离级别,从左到右越来越严格】
+    - 当发生事务嵌套的时候，子事务与外围事务不要处于同一个Service类中，这样会触发自调用的陷阱，事务会失效【@Transactional的实现原理是基于AOP的原因】
+- 被标记@Transactional的方法指导运行结束的时候Spring才会释放数据库事务资源，所以一些耗时的但是与数据库无关的操作不要放置到Service中完成，而是放在Controller中完成
+- Servlet 执行以下主要任务：
+    - 读取客户端（浏览器）发送的显式的数据。这包括网页上的 HTML 表单，或者也可以是来自 applet 或自定义的 HTTP 客户端程序的表单。
+    - 读取客户端（浏览器）发送的隐式的 HTTP 请求数据。这包括 cookies、媒体类型和浏览器能理解的压缩格式等等。
+    - 处理数据并生成结果。这个过程可能需要访问数据库，执行 RMI 或 CORBA 调用，调用 Web 服务，或者直接计算得出对应的响应。
+    - 发送显式的数据（即文档）到客户端（浏览器）。该文档的格式可以是多种多样的，包括文本文件（HTML 或 XML）、二进制文件（GIF 图像）、Excel 等。
+    - 发送隐式的 HTTP 响应到客户端（浏览器）。这包括告诉浏览器或其他客户端被返回的文档类型（例如 HTML），设置 cookies 和缓存参数，以及其他类似的任务。
+
+
+- Spring + Spring MVC + Spring Integration + Mybatis 架构概述
+    - Spring提供IOC和AOP的能力，一切的支撑技术
+    - Spring MVC 提供web页面访问框架能力
+    - Spring Integration, 采用订阅发布模型，实现了一个消息驱动的框架。将复杂的代码逻辑解耦；主体概念，
+        - Message消息主题。默认提供payload、header两个可操纵的字段
+        - int:Channel，管道，实现消息传播流动的载体
+        - int:Chain， 将不同管道连接的链条，控制消息流动方向
+        - int-http 配置外部网络请求响应的规】
+    - Spring-Mybatis 提供数据配置注入的能力、以及支持数据库事务
+    - Mybatis SQLSessionFactory的配置依赖于Spring的注入；提供数据库的访问接入（Mapper、Dao）
+    
+- 后台代码架构
+![后台代码基本架构](http://lc-cpc8kfpb.cn-n1.lcfile.com/67aea17b8db909a2c2f4.png)
+
