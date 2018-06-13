@@ -44,7 +44,7 @@ categories: frontEnd
         - Message消息主题。默认提供payload、header两个可操纵的字段
         - int:Channel，管道，实现消息传播流动的载体
         - int:Chain， 将不同管道连接的链条，控制消息流动方向
-        - int-http 配置外部网络请求响应的规】
+        - int-http 配置外部网络请求响应的规则
     - Spring-Mybatis 提供数据配置注入的能力、以及支持数据库事务
     - Mybatis SQLSessionFactory的配置依赖于Spring的注入；提供数据库的访问接入（Mapper、Dao）
     
