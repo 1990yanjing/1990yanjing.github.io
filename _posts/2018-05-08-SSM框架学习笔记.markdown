@@ -55,3 +55,15 @@ categories: frontEnd
     - Dao是底层实际操作数据的接口（Mybatis支持）
     - Vo（Value Object）数据模型实体
 
+- 梳理“存入”页面操作的完成后台调用流程
+![登录后请求且无异常流程](http://lc-cpc8kfpb.cn-n1.lcfile.com/87b251c1cb3348ccd79d.png)
+    1. httpRequestRouterChannel是入站的管道，httpRequestChannel默认的管道输出的管道，即登录后发生的网络调用
+    2. httpRequestChannel到signStateRouterChannel的链路，链路中设置RSA解密的filter
+    3. signStateRouterChannel管道，将一些不需要验证toke的请求，直接输送到后续的流程中，此外的请求，输送到verifyTokenChannel中
+    4. verifyTokenChannel到serviceRequestChannel的链路中，设置RequestChannelFilter，验证token，并将一些账户相关的数据，例如Trade_Account_NO装填到payload中
+    5. serviceRequestChannel到successChannel的链路中，设置serviceRouterChannel的网关，将请求路由到真这正处理的Channel中，调用实际的Command的Api
+    6. successChannel到responseChannel的链路中，通过transfer将Command返回的数据结构统一封装为ResultMessage
+    7. responseChannel到jsonTransferChannel的链路，根据自定义的header['content']字段选择结果数据结构的transfer，默认为jsonTransferChannel
+    8. 定义trasfer将object转换为json数据，到此输出为httpResponseChannel，完成一次网络请求的处理，将结果返回
+
+
