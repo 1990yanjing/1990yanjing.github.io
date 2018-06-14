@@ -25,7 +25,7 @@ categories: frontEnd
     - XML形式，已经不推荐了
     - 注解@Transactional是目前主流的方式
     - @Transactional的主要配置是：传递性Propagation、隔离性isolation的配置
-        - Propagation：REQUIRED（默认）、REQUIRES_NEW、Nested等等
+        - Propagation：REQUIRED（默认，当前有其他事务就沿用其他事务，如果没有就创建新的）、REQUIRES_NEW（创建新的事务）、Nested等等
         - isolation：脏读 < 读写提 < 可重复 < 序列化【事务并发的隔离级别,从左到右越来越严格】
     - 当发生事务嵌套的时候，子事务与外围事务不要处于同一个Service类中，这样会触发自调用的陷阱，事务会失效【@Transactional的实现原理是基于AOP的原因】
 - 被标记@Transactional的方法指导运行结束的时候Spring才会释放数据库事务资源，所以一些耗时的但是与数据库无关的操作不要放置到Service中完成，而是放在Controller中完成
@@ -65,5 +65,26 @@ categories: frontEnd
     6. successChannel到responseChannel的链路中，通过transfer将Command返回的数据结构统一封装为ResultMessage
     7. responseChannel到jsonTransferChannel的链路，根据自定义的header['content']字段选择结果数据结构的transfer，默认为jsonTransferChannel
     8. 定义trasfer将object转换为json数据，到此输出为httpResponseChannel，完成一次网络请求的处理，将结果返回
+
+- 高并发业务架构设计
+    - 无效请求的屏蔽
+        - 验证码（图形、短信验证码），并将验证服务防止到负载均衡服务器上去完成，减轻业务Web服务的压力
+        - 实名制
+        - 封闭僵尸账户、屏蔽IP
+    - 业务Web系统设计
+        - 水平分法，将服务按照业务处理类型进行分类，部署到不同Web服务器中分流请求
+        - 垂直分法，部署多套相同的服务到不同的Web服务器上面，按照服务器的处理能力进行分流
+        - 水平与垂直相结合，先按照业务进行分类，局部按照垂直的方式进行分布式
+    - 数据库优化
+        - 分表分库
+        - 优化SQL
+    - 动态数据和静态数据分离
+        - CDN
+        - HTTP静态服务器
+    - 锁和高并发
+        - 悲观锁是一种利用数据库内部机制提供的锁的方法，也就是对更新的数据加锁，这样在并发期间一旦有一个事务持有了数据库记录的锁，其他的线程将不能再对数据进行更新，这就是悲观锁的实现方式【for update】
+        - 乐观锁是一种不会阻塞其他线程并发的机制，他不会使用数据库的锁积极性实现，它的设计里面由于不阻塞其他线程，所以并不会引发线程频繁挂起和恢复，这样便能够提高并发能力。乐观锁使用的CAS原理，对于多个线程共享的资源，先保存一个旧值，然后经过一定的逻辑处理，当需要修改共享值的时候，先比较当前的值和旧值是否一致，如果一直则进行修改，否则就放弃【失败】或者重试【可重入，一般限制时间或者限制次数】
+        - 使用Redis进行原子性的保障
+
 
 
