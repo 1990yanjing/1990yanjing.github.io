@@ -1,0 +1,184 @@
+---
+layout: post
+title: 面试经历总结
+date: 2018-07-18
+tags: 面经
+categories: ios
+---
+
+>总结2018/07/16--2018/07/17社招面试(雪球、58金融、四达时代、洋钱罐)的经历总结，对知识进行查缺补漏
+
+>记录于此：任重道远，仍需努力，披荆斩棘，砥砺而行
+
+### 开发语言（Objective-C、Swift）相关
+
+- [Block的类型](https://www.jianshu.com/p/51d04b7639f1)
+    - [闭包的书写方式](https://www.jianshu.com/p/279406459686)
+    - block的数据结构
+    ```Java
+    struct Block_descriptor {
+        unsigned long int reserved;
+        unsigned long int size;
+        void (*copy)(void *dst, void *src);//对于上下文捕获变量的copy和释放
+        void (*dispose)(void *);
+    };
+    struct Block_layout {
+        void *isa;
+        int flags;
+        int reserved;
+        void (*invoke)(void *, ...);//指向调用函数的指针
+        struct Block_descriptor *descriptor;
+    };
+    ```
+    - isa指向class对象；FuncPtr指向调用函数的指针；拥有isa指正，说明block也是一个对象
+    - block就是一个里面存储了指向函数体中包含定义block时的代码块的函数指针，以及block外部上下文变量等信息的结构体
+    - block类型分为：_NSConcreteGlobalBlock（全局）、_NSConcreteStackBlock（栈）、_NSConcreteMallocBlock（堆）
+    ```Java
+    void (^globalBlock)() = ^{
+
+    };
+
+    int main(int argc, const char * argv[]) {
+        @autoreleasepool {
+            void (^stackBlock1)() = ^{
+
+            };
+        }
+        return 0;
+    }   
+    ```
+    - globalBlock的isa指向了_NSConcreteGlobalBlock，即在全局区域创建，编译时具体的代码就已经确定在上图中的代码段中了，block变量存储在全局数据存储区；stackBlock的isa指向了_NSConcreteStackBlock，即在栈区创建。**<font color="cc3040">即全局的block存储在全局数据存储区域；栈block在栈区创建</font>**
+    - 堆中的block无法直接创建，其需要由_NSConcreteStackBlock类型的block拷贝而来(也就是说block需要执行copy之后才能存放到堆中)。block的拷贝最终都会调用_Block_copy_internal函数
+    ```java
+    static void *_Block_copy_internal(const void *arg, const int flags) {
+        struct Block_layout *aBlock;
+        ...
+        aBlock = (struct Block_layout *)arg;
+        ...
+        // Its a stack block.  Make a copy.
+        if (!isGC) {
+            // 申请block的堆内存
+            struct Block_layout *result = malloc(aBlock->descriptor->size);
+            if (!result) return (void *)0;
+            // 拷贝栈中block到刚申请的堆内存中
+            memmove(result, aBlock, aBlock->descriptor->size); // bitcopy first
+            // reset refcount
+            result->flags &= ~(BLOCK_REFCOUNT_MASK);    // XXX not needed
+            result->flags |= BLOCK_NEEDS_FREE | 1;
+            // 改变isa指向_NSConcreteMallocBlock，即堆block类型
+            result->isa = _NSConcreteMallocBlock;
+            if (result->flags & BLOCK_HAS_COPY_DISPOSE) {
+                //printf("calling block copy helper %p(%p, %p)...\n", aBlock->descriptor->copy, result, aBlock);
+                (*aBlock->descriptor->copy)(result, aBlock); // do fixup
+            }
+            return result;
+        }
+        else {
+            ...
+        }
+    }
+    ```
+    - 不管是用什么形式访问实例变量，最终都会转换成self+变量内存偏移的形式
+    - **<font color="cc3040">ARC会自动帮strong类型且捕获外部变量的block进行copy，所以在定义block类型的属性时也可以使用strong，不一定使用copy</font>**;**当block类型为strong，但是创建时没有捕获外部变量，block最终会变成__NSGlobalBlock__类型**（这里可能因为block中的代码没有捕获外部变量，所以不需要在栈中开辟变量，也就是说，在编译时，这个block的所有内容已经在代码段中生成了，所以就把block的类型转换为全局类型）
+
+- Runtime
+    - OC语言在编译期都会被编译为C语言的Runtime代码，二进制执行过程中执行的都是C语言代码。而OC的类本质上都是结构体，在编译时都会以结构体的形式被编译到二进制中。Runtime是一套由C、C++、汇编实现的API，所有的方法调用都叫做发送消息
+    - ![对象模型](https://upload-images.jianshu.io/upload_images/270478-e57baaec1be41a4f.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
+    - 每个对象都是一个objc_object的结构体，在结构体中有一个isa指针，该指针指向自己所属的类，由Runtime负责创建对象
+    - IMP 在Runtime中IMP本质上就是一个函数指针，其定义如下。在IMP中有两个默认的参数id和SEL，id也就是方法中的self，这和objc_msgSend()函数传递的参数一样
+    - Method 用来表示方法，其包含SEL和IMP;在Xcode进行编译的时候，只会将Xcode的Compile Sources中.m声明的方法编译到Method List，而.h文件中声明的方法对Method List没有影响
+    - Property 在Runtime中定义了属性的结构体，用来表示对象中定义的属性;可以通过class_copyPropertyList或者class_copyIvarList获取对象的公共属性列表，甚至是私有属性列表。并且可以通过KVC或者Runtime（class_getInstanceVariable/object_setIvar/object_getIvar）访问和修改私有属性
+    - OC中不存在真正的私有属性和私有方法
+    - 内存布局
+        - **创建实例对象时，会根据其对应的Class分配内存，内存构成是ivars+isa_t。**并且实例变量不只包含当前Class的ivars，也会包含其继承链中的ivars。ivars的内存布局在编译时就已经决定，运行时需要根据ivars内存布局创建对象，<font color="cc3040">**所以Runtime不能动态修改ivars，会破坏已有内存布局。**</font>
+        ![内存布局](https://upload-images.jianshu.io/upload_images/270478-fe7e8b62b4f2e333.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/530)
+    - ivar的读写（访问）
+        - 实例变量的isa_t指针会指向其所属的类，对象中并不会包含method、protocol、property、ivar等信息，这些信息在编译时都保存在只读结构体class_ro_t中。在class_ro_t中ivars是const只读的，在image load时copy到class_rw_t中时，是不会copy ivars的，并且class_rw_t中并没有定义ivars的字段。
+        在访问某个成员变量时，直接通过isa_t找到对应的objc_class，并通过其class_ro_t的ivar list做地址偏移，查找对应的对象内存。正是由于这种方式，所以对象的内存地址是固定不可改变的。
+    - 方法调用
+        - 实例调用方法：objc_msgSend()发起调用，传入self和SEL --> 通过isa在类的内部查找方法列表对应的IMP；
+        如果调用的方法时涉及到当前对象的成员变量的访问，这时候就是在objc_msgSend()内部，通过类的ivar list判断地址偏移，取出ivar并传入调用的IMP中的。
+        - super调用父类方法：调用objc_msgSendSuper()函数实现。<font color="f03456">**需要注意的是，调用objc_msgSendSuper函数时传入的对象，也是当前实例变量，所以是在向自己发送父类的消息**</font>
+    - RunTime中的结构体
+        - 常见结构体类型定义
+        ```Java
+        typedef struct objc_class *Class;
+        typedef struct objc_object *id;
+
+        typedef struct method_t *Method;
+        typedef struct ivar_t *Ivar;
+        typedef struct category_t *Category;
+        typedef struct property_t *objc_property_t;
+        ```
+        - OC代码都是被首先编译问C语言文件然后生成二进制文件去执行。在OC中每个对象都是一个结构体（objc_object），结构体中都包含一个isa的成员变量，其位于成员变量的第一位。 
+        ```java
+        struct objc_object {
+            private:
+                isa_t isa;
+        };
+        ```
+        OC的对象都会在编译过程中翻译为C语言的结构体：
+        ```java
+        NSArray *array = [[NSArray alloc] init];
+        =======================================
+        // @class NSArray;
+        #ifndef _REWRITER_typedef_NSArray
+        #define _REWRITER_typedef_NSArray
+        typedef struct objc_object NSArray;
+        typedef struct {} _objc_exc_NSArray;
+        #endif
+        NSArray *array = ((NSArray *(*)(id, SEL))(void *)objc_msgSend)((id)((NSArray *(*)(id, SEL))(void *)objc_msgSend)((id)objc_getClass("NSArray"), sel_registerName("alloc")), sel_registerName("init"));
+        ```
+        - OC中的类和元类也是一样，都是结构体构成的。由于类的结构体定义继承自objc_object，所以其也是一个对象，并且具有对象的isa特征;
+        ![对象模型](https://upload-images.jianshu.io/upload_images/270478-b1b990cdf2c28b11.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
+        - instaceOfType(objc_object) --（isa）--> isa_t --（class）--> 元类（objc_class）--superClass（isa）--> 根元类
+        isa_t 类，描述对象相关的数据，cls字段指向元类
+        ```java
+        union isa_t 
+        {
+            isa_t() { }
+            isa_t(uintptr_t value) : bits(value) { }
+
+            Class cls;
+            uintptr_t bits;
+
+        # if __arm64__
+        #   define ISA_MASK        0x0000000ffffffff8ULL
+        #   define ISA_MAGIC_MASK  0x000003f000000001ULL
+        #   define ISA_MAGIC_VALUE 0x000001a000000001ULL
+            struct {
+                uintptr_t nonpointer        : 1; // 是32位还是64位
+                uintptr_t has_assoc         : 1; // 对象是否含有或曾经含有关联引用，如果没有关联引用，可以更快的释放对象
+                uintptr_t has_cxx_dtor      : 1; // 表示是否有C++析构函数或OC的析构函数
+                uintptr_t shiftcls          : 33; // 对象指向类的内存地址，也就是isa指向的地址
+                uintptr_t magic             : 6; // 对象是否初始化完成
+                uintptr_t weakly_referenced : 1; // 对象是否被弱引用或曾经被弱引用
+                uintptr_t deallocating      : 1; // 对象是否被释放中
+                uintptr_t has_sidetable_rc  : 1; // 对象引用计数太大，是否超出存储区域
+                uintptr_t extra_rc          : 19; // 对象引用计数
+        #       define RC_ONE   (1ULL<<45)
+        #       define RC_HALF  (1ULL<<18)
+            };
+        };
+        ``` 
+        元类的数据结构（objc_class）
+        ```java
+        struct objc_class : objc_object {
+            // Class ISA;
+            Class superclass;
+            cache_t cache;             
+            class_data_bits_t bits;    
+
+            class_rw_t *data() { 
+                return bits.data();
+            }
+            void setData(class_rw_t *newData) {
+                bits.setData(newData);
+            }
+            // .....
+        }
+        ```
+        bits是objc_class的主角，其内部只定义了一个uintptr_t类型的bits成员变量，存储了class_rw_t的地址。和class_data_bits_t相关的有两个很重要结构体，class_rw_t和class_ro_t，其中都定义着method list、protocol list、property list等关键信息。在编译后class_data_bits_t指向的是一个class_ro_t的地址，这个结构体是不可变的(只读)。在运行时，才会通过realizeClass函数将bits指向class_rw_t。
+        ```java
+        
+        ```
