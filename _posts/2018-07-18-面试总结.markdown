@@ -143,6 +143,7 @@ categories: ios
         ![对象模型](https://upload-images.jianshu.io/upload_images/270478-b1b990cdf2c28b11.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
         - instaceOfType(objc_object) --（isa）--> isa_t --（class）--> 元类（objc_class）--superClass（isa）--> 根元类
             - isa_t 类，描述对象相关的数据，cls字段指向元类
+        
         ```java
         union isa_t 
         {
@@ -171,7 +172,7 @@ categories: ios
             };
         };
         ``` 
-
+        
             - 元类的数据结构（objc_class）
         
         ```java
