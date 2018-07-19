@@ -142,8 +142,7 @@ categories: ios
         - OC中的类和元类也是一样，都是结构体构成的。由于类的结构体定义继承自objc_object，所以其也是一个对象，并且具有对象的isa特征;
         ![对象模型](https://upload-images.jianshu.io/upload_images/270478-b1b990cdf2c28b11.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
         - instaceOfType(objc_object) --（isa）--> isa_t --（class）--> 元类（objc_class）--superClass（isa）--> 根元类
-        isa_t 类，描述对象相关的数据，cls字段指向元类
-        
+            - isa_t 类，描述对象相关的数据，cls字段指向元类
         ```java
         union isa_t 
         {
@@ -173,7 +172,7 @@ categories: ios
         };
         ``` 
 
-        元类的数据结构（objc_class）
+            - 元类的数据结构（objc_class）
         
         ```java
         struct objc_class : objc_object {
@@ -191,8 +190,7 @@ categories: ios
             // .....
         }
         ```
-
-        bits是objc_class的主角，其内部只定义了一个uintptr_t类型的bits成员变量，存储了class_rw_t的地址。和class_data_bits_t相关的有两个很重要结构体，class_rw_t和class_ro_t，其中都定义着method list、protocol list、property list等关键信息。在编译后class_data_bits_t指向的是一个class_ro_t的地址，这个结构体是不可变的(只读)。在运行时，才会通过realizeClass函数将bits指向class_rw_t。
+            - bits是objc_class的主角，其内部只定义了一个uintptr_t类型的bits成员变量，存储了class_rw_t的地址。和class_data_bits_t相关的有两个很重要结构体，class_rw_t和class_ro_t，其中都定义着method list、protocol list、property list等关键信息。在编译后class_data_bits_t指向的是一个class_ro_t的地址，这个结构体是不可变的(只读)。在运行时，才会通过realizeClass函数将bits指向class_rw_t。
         
         ```java
         struct class_rw_t {
@@ -227,7 +225,7 @@ categories: ios
             property_list_t *baseProperties;
         };
         ```
-        
+
         - Tagged Pointer
             - 从iPhone5s开始，iOS设备开始引入了64位处理器，之前的处理器一直都是32位的。但是在64位处理器中，指针长度以及一些变量所占内存都发生了改变，32位一个指针占用4字节，但64位一个指针占用8字节；32位一个long占用4字节，64位一个long占用8字节等，所以在64位上内存占用会多出很多。苹果为了优化这个问题，推出了Tagged Pointer新特性。之前一个指针指向一个地址，而Tagged Pointer中一个指针就代表一个值。Tagged Pointer指针中就存储着对象的值；明显的提升了执行效率并节省了很多内存。在64位处理器下，内存占用减少了将近一半，执行效率也大大提升。由于通过指针来直接表示数值，所以没有了malloc和free的过程，对象的创建和销毁速度提升几十倍
     - 对象的初始化流程
