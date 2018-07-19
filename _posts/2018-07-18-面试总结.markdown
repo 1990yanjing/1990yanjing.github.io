@@ -30,9 +30,10 @@ categories: ios
         struct Block_descriptor *descriptor;
     };
     ```
-    - isa指向class对象；FuncPtr指向调用函数的指针；拥有isa指正，说明block也是一个对象
+    - isa指向class对象；FuncPtr指向调用函数的指针；拥有isa指针，说明block也是一个对象
     - block就是一个里面存储了指向函数体中包含定义block时的代码块的函数指针，以及block外部上下文变量等信息的结构体
     - block类型分为：_NSConcreteGlobalBlock（全局）、_NSConcreteStackBlock（栈）、_NSConcreteMallocBlock（堆）
+    
     ```Java
     void (^globalBlock)() = ^{
 
@@ -180,5 +181,39 @@ categories: ios
         ```
         bits是objc_class的主角，其内部只定义了一个uintptr_t类型的bits成员变量，存储了class_rw_t的地址。和class_data_bits_t相关的有两个很重要结构体，class_rw_t和class_ro_t，其中都定义着method list、protocol list、property list等关键信息。在编译后class_data_bits_t指向的是一个class_ro_t的地址，这个结构体是不可变的(只读)。在运行时，才会通过realizeClass函数将bits指向class_rw_t。
         ```java
-        
+        struct class_rw_t {
+            uint32_t flags;
+            uint32_t version;
+
+            const class_ro_t *ro;
+
+            method_array_t methods;
+            property_array_t properties;
+            protocol_array_t protocols;
+
+            Class firstSubclass;
+            Class nextSiblingClass;
+
+            char *demangledName;
+        };
+        struct class_ro_t {
+            uint32_t flags;
+            uint32_t instanceStart;
+            uint32_t instanceSize;
+            uint32_t reserved;
+
+            const uint8_t * ivarLayout;
+            
+            const char * name;
+            method_list_t * baseMethodList;
+            protocol_list_t * baseProtocols;
+            const ivar_list_t * ivars;
+
+            const uint8_t * weakIvarLayout;
+            property_list_t *baseProperties;
+        };
         ```
+        - Tagged Pointer
+            - 从iPhone5s开始，iOS设备开始引入了64位处理器，之前的处理器一直都是32位的。但是在64位处理器中，指针长度以及一些变量所占内存都发生了改变，32位一个指针占用4字节，但64位一个指针占用8字节；32位一个long占用4字节，64位一个long占用8字节等，所以在64位上内存占用会多出很多。苹果为了优化这个问题，推出了Tagged Pointer新特性。之前一个指针指向一个地址，而Tagged Pointer中一个指针就代表一个值。Tagged Pointer指针中就存储着对象的值；明显的提升了执行效率并节省了很多内存。在64位处理器下，内存占用减少了将近一半，执行效率也大大提升。由于通过指针来直接表示数值，所以没有了malloc和free的过程，对象的创建和销毁速度提升几十倍
+    - 对象的初始化流程
+
