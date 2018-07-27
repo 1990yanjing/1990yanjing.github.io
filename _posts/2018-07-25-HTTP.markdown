@@ -1,0 +1,15 @@
+---
+layout: post
+title: HTTP
+date: 2018-07-25
+tags: 程序员的自我修养
+categories: 计算机科学与技术
+---
+
+- TCP/IP协议族主要协议：ARP、TCP、IP、DNS、HTTP
+- HTTP是无状态协议；引入Cookie的机制用于状态管理
+- 三次握手、四次挥手
+- GET和POST
+- SSL：AES + RSA的通信过程 + CA证书认证身份
+- HTTPs = HTTP + SSL + TLS
+- SSL独立协议，也可以与stmp等其他应用层协议写作保证安全

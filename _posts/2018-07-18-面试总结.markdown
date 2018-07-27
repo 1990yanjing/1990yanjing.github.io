@@ -172,8 +172,8 @@ categories: ios
             };
         };
         ``` 
-        
-            - 元类的数据结构（objc_class）
+
+        - 元类的数据结构（objc_class）
         
         ```java
         struct objc_class : objc_object {
@@ -191,7 +191,8 @@ categories: ios
             // .....
         }
         ```
-            - bits是objc_class的主角，其内部只定义了一个uintptr_t类型的bits成员变量，存储了class_rw_t的地址。和class_data_bits_t相关的有两个很重要结构体，class_rw_t和class_ro_t，其中都定义着method list、protocol list、property list等关键信息。在编译后class_data_bits_t指向的是一个class_ro_t的地址，这个结构体是不可变的(只读)。在运行时，才会通过realizeClass函数将bits指向class_rw_t。
+
+        - bits是objc_class的主角，其内部只定义了一个uintptr_t类型的bits成员变量，存储了class_rw_t的地址。和class_data_bits_t相关的有两个很重要结构体，class_rw_t和class_ro_t，其中都定义着method list、protocol list、property list等关键信息。在编译后class_data_bits_t指向的是一个class_ro_t的地址，这个结构体是不可变的(只读)。在运行时，才会通过realizeClass函数将bits指向class_rw_t。
         
         ```java
         struct class_rw_t {
@@ -230,4 +231,137 @@ categories: ios
         - Tagged Pointer
             - 从iPhone5s开始，iOS设备开始引入了64位处理器，之前的处理器一直都是32位的。但是在64位处理器中，指针长度以及一些变量所占内存都发生了改变，32位一个指针占用4字节，但64位一个指针占用8字节；32位一个long占用4字节，64位一个long占用8字节等，所以在64位上内存占用会多出很多。苹果为了优化这个问题，推出了Tagged Pointer新特性。之前一个指针指向一个地址，而Tagged Pointer中一个指针就代表一个值。Tagged Pointer指针中就存储着对象的值；明显的提升了执行效率并节省了很多内存。在64位处理器下，内存占用减少了将近一半，执行效率也大大提升。由于通过指针来直接表示数值，所以没有了malloc和free的过程，对象的创建和销毁速度提升几十倍
     - 对象的初始化流程
+        - alloc + init 和 new 两种调用方式在runtime；在runtime源码中，执行init操作本质上就是直接把self返回，其实如果没有自定义或者覆盖init，调不调用init都是一样的；
+        初始化对象：初始化isa指针，初始化元类，计算对象实例化时，所有变量所占的内存大小（对象内存大小固定（主要包括isa + ivar【class_ro_t】等）），在编译时就已经确定，在运行时无法改变
+        - 在对象销毁时，运行时环境会调用NSObject的dealloc方法执行销毁代码，并不需要我们手动去调用。接着会调用到Runtime内部的objc_object::rootDealloc(C++命名空间)函数。
+    - class_addMethod runTime过程中动态的添加方法
+        - 在Runtime中动态的替换或者增加方法，本质上都是调用addMethod方法；该方法会返回一个布尔值，用来表明所要添加的方法是否存在
+        - 在分类的load方法中进行方法swizzle的步骤
+            - 声明原始方法和swizzle方法（在分类中实现了）的SEL和Method
+            - 调用class_Method方法，添加原始方法为方法名，swizzle实现为Method的方法
+            - 若class_Method调用返回True，说明原始方法不存在并且调价成功，那么调用class_replaceMethod替换方法名为swizzle方法的实现为原始Method的方法
+            - 若class_Method调用返回false，说明原始方法已经存在添加失败，那么调用method_exchangeImplementations交换原始和swizzle的方法实现Method
+        
+        ```java
+        Class class = [self class];
+        SEL originalSelector = @selector(dismissViewControllerAnimated:completion:);
+        SEL swizzledSelector = @selector(dfup_dismissViewControllerAnimated:completion:);
+        Method originalMethod = class_getInstanceMethod(class, originalSelector);
+        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
+        BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));
+        if (success) {
+            class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod);
+        }
+        ```
+    - SEL是由objc_selector结构体实现的，但是从现在的源码来看，SEL是一个const char*的常量字符串，只是代表一个名字而已
+    - 程序加载过程
+        - 在iOS程序中会用到很多**系统的动态库**，这些动态库都是动态加载的。**所有iOS程序共用一套系统动态库，在程序开始运行时才会开始链接动态库。**
+        - 在应用程序启动后，由dyld(the dynamic link editor)进行程序的初始化操作。大概流程就像下面列出的步骤，其中第3、4、5步会执行多次，在ImageLoader加载新的image进内存后就会执行一次。
+            1. 在应用程序启动后，由dyld将应用程序加载到二进制中，并完成一些文件的初始化操作。
+            2. Runtime向dyld中注册回调函数。
+            3. 通过ImageLoader将所有image加载到内存中。
+            4. dyld在image发生改变时，主动调用回调函数。
+            5. Runtime接收到dyld的函数回调，开始执行map_images、load_images等操作，并回调+load方法。
+            6. 调用main()函数，开始执行业务代码。
+        - load
+            - load类方法的调用时机比main函数还要靠前。load方法是由系统来调用的，并且在整个程序运行期间，只会调用一次，所以可以在load方法中执行一些只执行一次的操作
+            - load方法的调用顺序应该是“父类 -> 子类 -> 分类”的顺序。因为执行加载Class的时机是在Category之前的，而且load子类之前会先load父类，所以是这种顺序
+            - 但是若子类没有实现load并不会去掉用父类的
+        - initialize
+            - 和load方法类似的也有initialize方法，initialize方法也是由Runtime进行调用的，自己不可以直接调用。与load方法不同的是，initialize方法是在第一次调用类所属的方法(实例方法、类方法)时，才会调用initialize方法，而load方法是在main函数之前就全部调用了。所以理论上来说initialize可能永远都不会执行，如果当前类的方法永远不被调用的话。
+            - 分类的实现的initialize方法会覆盖本类的实现
+            - 如果没有主动的显式的去掉用initialize，initialize只会被调用一次
+    - 消息的发送机制
+        - 在OC中方法调用是通过Runtime实现的，Runtime进行方法调用本质上是发送消息，通过objc_msgSend()函数进行消息发送
+        - 不同类的相同SEL是同一个对象。
+        - 当一个对象被创建时，系统会为其分配内存，并完成默认的初始化工作，例如对实例变量进行初始化。对象第一个变量是指向其类对象的指针-isa，isa指针可以访问其类对象，并且通过其类对象拥有访问其所有继承者链中的类
+        - 消息发送的流程
+            1. 判断当前调用的SEL是否需要忽略
+            2. 判断接收消息的对象是否为nil
+            3. 从方法的缓存列表中查找，通过cache_getImp函数进行查找，如果找到缓存则直接返回IMP。
+            4. 查找当前类的method list，查找是否有对应的SEL，如果有则获取到Method对象，并从Method对象中获取IMP，并返回IMP(这步查找结果是Method对象)。
+            5. 如果在当前类中没有找到SEL，则去父类中查找。首先查找cache list，如果缓存中没有则查找method list，并以此类推直到查找到NSObject为止。
+            6. 如果在类的继承体系中，始终没有查找到对应的SEL，则进入动态方法解析中。可以在resolveInstanceMethod和resolveClassMethod两个方法中动态添加实现。
+            7. 动态消息解析如果没有做出响应，则进入动态消息转发阶段。此时可以在动态消息转发阶段做一些处理，否则就会Crash。
+    - Category
+        - Category语法很相似的还有Extension，二者的区别在于，Extension在编译期就直接和原类编译在一起，而**Category是在运行时动态添加到原类中的**
+        - 在有多个Category和原类的方法重复定义的时候，原类和所有Category的方法都会存在，并不会被后面的覆盖。假设有一个方法叫做method，Category和原类的方法都会被添加到方法列表中，只是存在的顺序不同;在进行方法调用的时候，会优先遍历Category的方法，并且后面被添加到项目里的Category，会被优先调用
+            - <font color="f033456">元类中的MethodList的最终顺序**同时与Building Phases的编译列表和是否实现了+load方法有关**</font>
+                - 没有实现+load方法的分类方法会排在实现了+load前面
+                - 若同为实现或者同为未实现+load方法的分类，则按照Building Phases的编译列表中的顺序排列
+        - >**在有多个Category和原类方法重名的情况下，怎样在一个Category的方法被调用后，调用所有Category和原类的方法？**
 
+            可以在一个Category方法被调用后，遍历方法列表并调用其他同名方法。但是需要注意一点是，遍历过程中不能再调用自己的方法，否则会导致递归调用。为了避免这个问题，可以在调用前判断被调动的方法IMP是否当前方法的IMP。
+
+            ```java
+            - (void)method {
+    
+                //获取当前方法的IMP
+                IMP currentIMP = [[self class] instanceMethodForSelector:_cmd];
+                unsigned int methodCount = 0;
+                //获取类的所有方法列表（Methodlist）包括私有方法
+                Method *methodList = class_copyMethodList([self class], &methodCount);
+                NSMutableArray *methodsArray = [NSMutableArray arrayWithCapacity:methodCount];
+                
+                //定义IMP函数指针类型
+                void (*function) (id self, SEL _cmd, NSObject* object);
+
+                for(int i = 0; i < methodCount; i++)
+                {
+                    Method temp = methodList[i];
+                    IMP imp = method_getImplementation(temp);
+                    SEL name_f = method_getName(temp);
+                    
+                    //判断与当前函数同名且不是当前函数的IMP
+                    if ([[NSString stringWithUTF8String:sel_getName(name_f)] isEqualToString:[NSString stringWithUTF8String:sel_getName(_cmd)]] && imp != currentIMP) {
+            
+                        function = method_getImplementation(temp);
+                        function(self, name_f, [NSObject new]);
+                    }
+                }
+            }
+            ```
+
+        - >**那怎样在任何一个Category的方法被调用后，只调用原类方法呢？**
+
+            根据上面对方法调用的分析，Runtime在调用方法时会优先所有Category调用，所以可以倒叙遍历方法列表，只遍历第一个方法即可，这个方法就是原类的方法。
+
+            ```java
+            - (void)method {
+                
+                NSLog(@"printMySelf --- MainClass (C)");
+                
+                //获取当前方法的IMP
+                IMP currentIMP = [[self class] instanceMethodForSelector:_cmd];
+                unsigned int methodCount = 0;
+                //获取类的所有方法列表（Methodlist）包括私有方法
+                Method *methodList = class_copyMethodList([self class], &methodCount);
+                NSMutableArray *methodsArray = [NSMutableArray arrayWithCapacity:methodCount];
+                
+                //定义IMP函数指针类型
+                void (*function) (id self, SEL _cmd, NSObject* object);
+                //将MethodList从后向前遍历，找到第一个同名Method，即为
+                for(int i = methodCount - 1; i >=0 ; i--)
+                {
+                    Method temp = methodList[i];
+                    IMP imp = method_getImplementation(temp);
+                    SEL name_f = method_getName(temp);
+                    
+                    //判断不是当前函数的IMP
+                    if ([[NSString stringWithUTF8String:sel_getName(name_f)] isEqualToString:[NSString stringWithUTF8String:sel_getName(_cmd)]] && imp != currentIMP) {
+                        
+                        function = method_getImplementation(temp);
+                        function(self, name_f, [NSObject new]);
+                        break;
+                    }
+                }
+            }
+            ```
+    
+    - 消息的转发
+        - 当通过调用objc_msgSend()方法调用，也无法找到对应的Method的时候；会进入动态转发流程
+            - +resolveInstanceMethod：动态解析类方法；可以在该方法中调用class_addMethod动态的添加方法，返回True
+            - forwardingTargetForSelector:(SEL)aSelector：可以返回备援对象的实例
+            - forwardInvocation:(NSInvocation *)anInvocation 作用与上一步等效，new其他备援对象的实例，作为NSInvocation调用的target
