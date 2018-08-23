@@ -84,7 +84,7 @@ categories: ios
 
     - 不管是用什么形式访问实例变量，最终都会转换成self+变量内存偏移的形式
     - **<font color="cc3040">ARC会自动帮strong类型且捕获外部变量的block进行copy，所以在定义block类型的属性时也可以使用strong，不一定使用copy</font>**;**当block类型为strong，但是创建时没有捕获外部变量，block最终会变成__NSGlobalBlock__类型**（这里可能因为block中的代码没有捕获外部变量，所以不需要在栈中开辟变量，也就是说，在编译时，这个block的所有内容已经在代码段中生成了，所以就把block的类型转换为全局类型）
-
+    - block对于使用__block修饰的自动变量，会将其包装为对象，使其移动到堆上；对于单纯的局部自动变量只是值传递，只是保存了捕获时的取值，故不会受到外界变量的影响，也不能影响外界的变量
 - Runtime
     - OC语言在编译期都会被编译为C语言的Runtime代码，二进制执行过程中执行的都是C语言代码。而OC的类本质上都是结构体，在编译时都会以结构体的形式被编译到二进制中。Runtime是一套由C、C++、汇编实现的API，所有的方法调用都叫做发送消息
     - ![对象模型](https://upload-images.jianshu.io/upload_images/270478-e57baaec1be41a4f.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
@@ -365,3 +365,33 @@ categories: ios
             - +resolveInstanceMethod：动态解析类方法；可以在该方法中调用class_addMethod动态的添加方法，返回True
             - forwardingTargetForSelector:(SEL)aSelector：可以返回备援对象的实例
             - forwardInvocation:(NSInvocation *)anInvocation 作用与上一步等效，new其他备援对象的实例，作为NSInvocation调用的target
+    - KVO
+        - KVO和NSNotificationCenter都是iOS中观察者模式的一种实现。区别在于，相对于被观察者和观察者之间的关系，KVO是一对一的，而不一对多的。KVO对被监听对象无侵入性，不需要修改其内部代码即可实现监听
+        - 通过addObserver:forKeyPath:options:context:方法注册观察者，观察者可以接收keyPath属性的变化事件
+        - 在调用addObserver方法后，KVO并不会对观察者进行强引用，所以需要注意观察者的生命周期，否则会导致观察者被释放带来的Crash
+        - 观察者需要实现observeValueForKeyPath:ofObject:change:context:方法，当KVO事件到来时会调用这个方法，如果没有实现会导致Crash
+    - UIView
+        - frame实现相对父View坐标系中的位置描述；bounds是对于自身坐标系的表描述，bounds中position是对左上角的坐标点的位置的描述，即对其所有子View的Frame的参考坐标，所以父View的bounds的position的改变会影响所有子View的位置。**UIScrollView滑动的时候实际改变的是bounds的position**。
+        - **layoutSubviews方法**：init初始化不会触发layoutSubviews；addSubview会触发layoutSubviews；frame发生变化会触发layoutSubviews；滚动一个UIScrollView会触发layoutSubviews；改变一个UIView大小的时候也会触发父UIView上的layoutSubviews事件；**创建一个customView后，必须找到着陆床，让它能够被addSubview到一个父层，否则永远不会进入layoutSubviews**
+        - **how to use updateConstraints**
+            - 尽量将约束的添加写到类似于viewDidLoad的方法中(init方法)。
+            - updateConstraints并不应该用来给视图添加约束，它更适合用于周期性地更新视图的约束，或者在添加约束过于消耗性能的情况下将约束写到该方法中。
+            - 当我们在响应事件时（例如点击按钮时）对约束的修改如果写到updateConstraints中，会让代码的可读性非常差。
+        - 刷新子对象布局
+            - layoutSubviews方法：这个方法，默认没有做任何事情，需要子类进行重写
+            - setNeedsLayout方法： 标记为需要重新布局，异步调用layoutIfNeeded刷新布局，不立即刷新，但layoutSubviews一定会被调用
+            - layoutIfNeeded方法：如果，有需要刷新的标记，立即调用layoutSubviews进行布局（如果没有标记，不会调用layoutSubviews）
+        - 重绘
+            - drawRect:(CGRect)rect方法：重写此方法，执行重绘任务
+                - 该方法在调用sizeToFit后被调用
+                - drawRect：方法不能手动显示调用，必须通过调用setNeedsDisplay 或者 setNeedsDisplayInRect，让系统自动调该方法
+                - 要实时画图，不能使用gestureRecognizer，只能使用touchbegan等方法来掉用setNeedsDisplay实时刷新屏幕
+                - setNeedsDisplay方法：标记为需要重绘，异步调用drawRect
+                - setNeedsDisplayInRect:(CGRect)invalidRect方法：标记为需要局部重绘
+            - sizeToFit
+                - sizeToFit会自动调用sizeThatFits方法；
+                - sizeToFit不应该在子类中被重写，应该重写sizeThatFits
+                - sizeThatFits传入的参数是receiver当前的size，返回一个适合的size
+        - UIView的绘制
+            - 
+    - [内存管理](http://kimihe.com/2016/12/03/深入总结iOS内存管理/)

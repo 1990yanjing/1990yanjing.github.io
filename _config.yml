@@ -24,6 +24,7 @@ blog_button:
 nav:
     - {title: Github, description: My Projects, url: 'https://github.com/1990yanjing'}
     - {title: 个人简历, description: 个人简历, url: '/resume/index.html'}
+    - {title: 我在华夏的两年, description: workHandover, url: '/workHandover/workHandover.html'}
     # - {title: Another Button, description: A button, url: 'http://example.com'}
 
 # Pagination
