@@ -12,8 +12,6 @@ categories: ios
 
 - 理论上讲，增加CPU的数量可以提高运算速度，并且在理想状况下，速度的提高与CPU的数量成正比。但是实际上并非如此，因为我的程序并不是都能分解成若干完全不相干的子问题。就比如一个女人可以花10个月生出一个孩子，但是10个女人并不能在一个月就是生出一个孩子。
 
-- ![image-20190829174815452](/var/folders/zl/gjhxf3gd61xg43556kwb33680000gn/T/abnerworks.Typora/image-20190829174815452.png)
-
 - 线程拥有的私有存储空间：栈、线程的局部存储、寄存器（包括PC寄存器》
 
   > PC，是program counter的缩写，就是[程序计数器](https://www.baidu.com/s?wd=%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8&tn=SE_PcZhidaonwhc_ngpagmjz&rsv_dl=gh_pc_zhidao)，PC寄存器中的内容，是下一条要取的指令的16位[存储单元](https://www.baidu.com/s?wd=%E5%AD%98%E5%82%A8%E5%8D%95%E5%85%83&tn=SE_PcZhidaonwhc_ngpagmjz&rsv_dl=gh_pc_zhidao)地址，在程序执行的过程中，PC中的值会自动加一】）
@@ -89,23 +87,15 @@ categories: ios
     - SYMBOL TABLE:
 
       000000000000006c l       0e SECT   02 0000 [.data] _main.static_var
-
       0000000000000120 l       0e SECT   04 0000 [.bss] _main.static_var2
-
       0000000000000000 g       0f SECT   01 0000 [.text] _func1
-
       0000000000000068 g       0f SECT   02 0000 [.data] _global_init_var
-
       0000000000000030 g       0f SECT   01 0000 [.text] _main
-
       0000000000000004         01 COM    00 0200 _global_uninit_var
-
       0000000000000000 g       01 UND    00 0000 _printf
-
 - C语言的源代码文件中所有全局的变量和函数经过编译后，相对应的符号名称前加上下划线"_"
 
 - 链接过程一般分为两步
-
   - 空间与地址分配：合并所有输入的目标文件的段和符号表，并重新建立映射关系
   - 符号解析与重定位
 
@@ -138,7 +128,7 @@ categories: ios
     - 数据VMA，权限可读写，可执行；有映像文件
     - 堆VMA，权限可读写、可执行；无映像文件，匿名，可向上扩展
     - 栈VMA，权限可读写、不可执行；无映像文件，匿名，可向下扩展
-  - ![image-20191009180535239](/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-20191009180535239.png)
+  - ![image-20191009180535239](../assets/images/image-20191009180535239.png)
 
 - **进程启动时的运行环境信息，例如，系统环境变量、进程运行参数，操作系统再进程启动前将这些信息保存到进程的虚拟空间的栈（也成为堆栈）中**
 
@@ -149,13 +139,13 @@ categories: ios
 
 - 动态链接中，依赖的动态共享库也需要与主程序的可执行文件一起链接，需要确认目标文件中的符号是静态符号还是动态符号
 
-- ![image-20191009180031724](/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-1.png)
+- ![image-20191009180031724](../assets/images/image-1.png)
 
 - 优化动态链接性能
 
   - 延迟绑定，当函数第一次被用到的时候才进行绑定
 
-- ![image-20191010102227387](/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-20191010102227387.png)
+- ![image-20191010102227387](../assets/images/image-20191010102227387.png)
 
 - 动态链接的步骤
 
@@ -173,21 +163,21 @@ categories: ios
 
 - 进程内存分布
 
-  > <img src="/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-20191010113312531.png" style="zoom:50%" />
+  > <img src="../assets/images/image-20191010113312531.png" style="zoom:50%" />
 
 - 栈保存了一个函数调用所需要的维护的信息，成为堆栈帧。
 
-  - ![image-20191010141503302](/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-20191010141503302.png)
+  - ![image-20191010141503302](../assets/images/image-20191010141503302.png)
 
 - ”烫”的由来
 
-  - ![image-20191010143718351](/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-20191010143718351.png)
+  - ![image-20191010143718351](../assets/images/image-20191010143718351.png)
 
 - 堆是申请内存空间的地方，程序可以请求一块连续的内存，并且自由使用，这块内存在程序主动放弃之前都会一直保持有效
 
-  - ![image-20191010160924823](/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-20191010160924823.png)
+  - ![image-20191010160924823](../assets/images/image-20191010160924823.png)
 
-- ![image-20191010162038102](/Users/yanwang/Desktop/笔记/《程序员的自我修养》读书笔记//image-20191010162038102.png)
+- ![image-20191010162038102](../assets/images/image-20191010162038102.png)
 
 - 系统调用，用于访问系统资源，包括文件、网络、IO、各种设备等
 
