@@ -87,12 +87,19 @@ categories: ios
     - SYMBOL TABLE:
 
       000000000000006c l       0e SECT   02 0000 [.data] _main.static_var
+
       0000000000000120 l       0e SECT   04 0000 [.bss] _main.static_var2
+
       0000000000000000 g       0f SECT   01 0000 [.text] _func1
+
       0000000000000068 g       0f SECT   02 0000 [.data] _global_init_var
+
       0000000000000030 g       0f SECT   01 0000 [.text] _main
+
       0000000000000004         01 COM    00 0200 _global_uninit_var
+
       0000000000000000 g       01 UND    00 0000 _printf
+      
 - C语言的源代码文件中所有全局的变量和函数经过编译后，相对应的符号名称前加上下划线"_"
 
 - 链接过程一般分为两步
